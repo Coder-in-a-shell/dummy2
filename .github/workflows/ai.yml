@@ -1,0 +1,31 @@
+name: Respond to PR Comment
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  run-my-tool:
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@mytool analyze diff')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR Code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.issue.pull_request.head.ref }}
+          repository: ${{ github.repository }}
+
+      - name: Run Your Tool
+        run: |
+          echo "Running analysis for @${{ github.actor }}"
+          python my_tool.py > output.txt
+
+      - name: Post Comment Back to PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.issue.number }} \
+            --body "$(cat output.txt)"
